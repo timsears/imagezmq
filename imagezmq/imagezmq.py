@@ -75,7 +75,8 @@ class ImageSender():
         self.zmq_context = SerializingContext()
         self.zmq_socket = self.zmq_context.socket(socketType)
         self.zmq_socket.bind(address)
-
+        self.zmq_socket.setsockopt(zmq.SNDHWM, 1)
+        
         # Assign corresponding send methods for PUB/SUB mode
         self.send_image = self.send_image_pubsub
         self.send_jpg   = self.send_jpg_pubsub
@@ -232,11 +233,16 @@ class ImageHub():
     def init_pubsub(self, address):
        """ Initialize Hub in PUB/SUB mode
        """
+       print ('begin init_pubsub for ' + address)
        socketType = zmq.SUB
        self.zmq_context = SerializingContext()
        self.zmq_socket = self.zmq_context.socket(socketType)
        self.zmq_socket.setsockopt(zmq.SUBSCRIBE, b'')
        self.zmq_socket.connect(address)
+       self.zmq_socket.setsockopt(zmq.CONFLATE, 1) # only keep one message in queu
+       self.zmq_socket.setsockopt(zmq.RCVHWM, 1)
+       print ('end init_pubsub')
+       
 
     def connect(self, open_port):
         """In PUB/SUB mode, the hub can connect to multiple senders at the same
@@ -246,7 +252,7 @@ class ImageHub():
         Arguments:
              open_port: the PUB socket to connect to.
         """
-
+        print("Called connect!")
         if self.REQ_REP == False:
             #This makes sense only in PUB/SUB mode
             self.zmq_socket.setsockopt(zmq.SUBSCRIBE, b'')
