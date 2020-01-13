@@ -32,18 +32,15 @@ parser.add_argument('server',
 
 camname = socket.gethostname()
 print(camname)
-if camname == 'pi1': defaultPort = '8234'
-elif camname == 'pi2' : defaultPort = '8235'
-else None
 
 parser.add_argument('port',
                     '-p',
                     '--port', help ='Port to send to',
                     required = False
-                    default = defaultPort
+                    default = '8234'
                     )
 
-assert port is not None, "port not defined for " + hostname
+# defaults is to send to nassella.local:8234
 
 viewer_ip = socket.gethostbyname(server)
 viewer_addr = 'tcp://' + viewer_ip + ':' + viewer_port
@@ -53,7 +50,6 @@ viewer = imagezmq.ImageSender(connect_to='tcp://' + viewer_ip + ':' + viewer_por
 #while True:  # send images as stream until Ctrl-C
 #    image = picam.read()
 #    toviewer.send_image(rpi_name, image)
-
 
 jpeg_quality = 95  # 0 to 100, higher is better quality, 95 is cv2 default
 while True:  # send images as stream until Ctrl-C
