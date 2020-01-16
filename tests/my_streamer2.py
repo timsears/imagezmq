@@ -24,37 +24,33 @@ picam = VideoStream(usePiCamera=True, resolution=(1200, 1200)).start()
 time.sleep(1.0)  # allow camera sensor to warm up
 
 parser = argparse.ArgumentParser()
-parser.add_argument('server',
-                    '-s',
-                    '--server', help='Name of the server to send images to',
-                    required=False,
-                    default='nassella.local')
+parser.add_argument('--server', dest = 'server',
+                    help='Name of the server to send images to',
+                    required=True,
+                    default=None)
 
-camname = socket.gethostname()
-print(camname)
+parser.add_argument('--port', dest = 'port',
+                    help ='Port to send to',
+                    required = True,
+                    default = None)
 
-parser.add_argument('port',
-                    '-p',
-                    '--port', help ='Port to send to',
-                    required = False
-                    default = '8234'
-                    )
+args = parser.parse_args()
+
+viewer_name = args.server
+viewer_port = args.port
 
 # defaults is to send to nassella.local:8234
+cam_name = socket.gethostname()
+print(f'Starting {cam_name}')
+viewer_ip = socket.gethostbyname(viewer_name)
+viewer_addr = f'tcp://{viewer_ip}:{viewer_port}'
+print(f'Sending to {viewer_name} at {viewer_addr}')
+viewer = imagezmq.ImageSender(connect_to = f'tcp://{viewer_ip}:{viewer_port}')
 
-viewer_ip = socket.gethostbyname(server)
-viewer_addr = 'tcp://' + viewer_ip + ':' + viewer_port
-print('Sending to ' + viewer_name + ' at ' + viewer_addr)
-viewer = imagezmq.ImageSender(connect_to='tcp://' + viewer_ip + ':' + viewer_port)
-
-#while True:  # send images as stream until Ctrl-C
-#    image = picam.read()
-#    toviewer.send_image(rpi_name, image)
-
-jpeg_quality = 95  # 0 to 100, higher is better quality, 95 is cv2 default
+jpeg_quality = 100  # 0 to 100, higher is better quality, 95 is cv2 default
 while True:  # send images as stream until Ctrl-C
     image = picam.read()
     ret_code, jpg_buffer = cv2.imencode(
         ".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_quality])
-    viewer.send_jpg(rpi_name, jpg_buffer)
+    viewer.send_jpg(cam_name, jpg_buffer)
 
